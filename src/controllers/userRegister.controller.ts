@@ -48,4 +48,34 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-export { createUser };
+const loginController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return next(createHttpError(400, "All Fields are required"));
+  }
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return next(createHttpError(404, "User not found"));
+    }
+    const isMatch = await brcypt.compare(password, user.password as string);
+    if (!isMatch) {
+      return next(createHttpError(400, "Password is incorrect"));
+    }
+    //Generation Access Token
+    const token = sign({ sub: user._id }, Config.jwtSecret as string, {
+      expiresIn: "7d",
+    });
+    return res.json({
+      token: token,
+    });
+  } catch (error) {
+    return next(createHttpError(500, "Internal Server Error"));
+  }
+};
+
+export { createUser, loginController };
