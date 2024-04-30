@@ -53,15 +53,19 @@ const loginController = async (
   res: Response,
   next: NextFunction
 ) => {
+  //Validation
   const { email, password } = req.body;
   if (!email || !password) {
     return next(createHttpError(400, "All Fields are required"));
   }
   try {
+    //Check user in Database
     const user = await User.findOne({ email });
     if (!user) {
       return next(createHttpError(404, "User not found"));
     }
+
+    //Password Check
     const isMatch = await brcypt.compare(password, user.password as string);
     if (!isMatch) {
       return next(createHttpError(400, "Password is incorrect"));
